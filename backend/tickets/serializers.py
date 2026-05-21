@@ -55,6 +55,7 @@ class TicketMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketMessage
         fields = '__all__'
+        read_only_fields = ['autor']
 
 class TicketLogSerializer(serializers.ModelSerializer):
     usuario_detalhes = UserSerializer(source='usuario', read_only=True)

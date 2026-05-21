@@ -1,0 +1,306 @@
+<div class="min-h-screen bg-slate-50 flex">
+  
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex">
+    <div class="h-16 flex items-center px-6 bg-slate-950 border-b border-slate-800">
+      <i class="ph ph-headset text-2xl mr-2 text-indigo-400"></i>
+      <span class="font-bold text-white tracking-wide">CMEM HelpDesk</span>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-6">
+      <nav class="px-4 space-y-2">
+        <button (click)="loadTickets()" class="w-full bg-indigo-600 text-white flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-md cursor-pointer">
+          <i class="ph ph-ticket text-xl mr-3"></i> Meus Chamados
+        </button>
+        <button (click)="navigateNovoChamado()" class="w-full text-emerald-400 hover:bg-slate-800 hover:text-emerald-300 flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer mt-4">
+          <i class="ph ph-plus-circle text-xl mr-3"></i> Abrir Chamado
+        </button>
+      </nav>
+    </div>
+    
+    <div class="p-4 border-t border-slate-800">
+      <button (click)="logout()" class="w-full text-left text-slate-400 hover:text-white flex items-center px-4 py-2 text-sm font-medium transition-colors cursor-pointer">
+        <i class="ph ph-sign-out text-xl mr-3"></i> Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Topbar -->
+    <header class="h-16 bg-white shadow-sm border-b border-slate-200 flex items-center justify-between px-6 z-10">
+      <div class="flex items-center md:hidden">
+        <i class="ph ph-list text-2xl text-slate-600"></i>
+      </div>
+      
+      <div class="flex-1 px-4 flex justify-between">
+        <div class="flex-grow flex">
+          <h2 class="text-xl font-bold text-slate-800">Painel do Usuário</h2>
+        </div>
+      </div>
+      
+      <div class="ml-4 flex items-center md:ml-6 space-x-4">
+        <span class="text-slate-600 text-sm font-medium hidden sm:inline" *ngIf="currentUser">
+          Olá, {{ currentUser.first_name || currentUser.username }}
+        </span>
+        <div class="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md select-none" *ngIf="currentUser">
+          {{ getInitials(currentUser.first_name, currentUser.last_name) }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50 p-6">
+      
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+        <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+          <div class="p-3 rounded-xl bg-blue-50 text-blue-600">
+            <i class="ph ph-ticket text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-slate-500 truncate">Total de Chamados</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ tickets.length }}</p>
+          </div>
+        </div>
+        
+        <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+          <div class="p-3 rounded-xl bg-red-50 text-red-600">
+            <i class="ph ph-warning-circle text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-slate-500 truncate">Em Aberto / Análise</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900">
+              {{ tickets.filter(t => t.status === 'Aberto' || t.status === 'Em análise').length }}
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+          <div class="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+            <i class="ph ph-check-circle text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-slate-500 truncate">Resolvidos</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900">
+              {{ tickets.filter(t => t.status === 'Resolvido' || t.status === 'Finalizado').length }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tickets List -->
+      <div class="bg-white shadow-sm rounded-2xl border border-slate-100 overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h3 class="text-lg leading-6 font-semibold text-slate-900">
+            Meus Chamados Recentes
+          </h3>
+          
+          <div class="flex space-x-2">
+            <button 
+              (click)="selectedFilter = 'Todos'"
+              [class]="selectedFilter === 'Todos' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 cursor-pointer' : 'bg-white text-slate-600 hover:bg-slate-50 cursor-pointer'"
+              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+            >Todos</button>
+            <button 
+              (click)="selectedFilter = 'Aberto'"
+              [class]="selectedFilter === 'Aberto' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 cursor-pointer' : 'bg-white text-slate-600 hover:bg-slate-50 cursor-pointer'"
+              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+            >Abertos</button>
+            <button 
+              (click)="selectedFilter = 'Resolvido'"
+              [class]="selectedFilter === 'Resolvido' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 cursor-pointer' : 'bg-white text-slate-600 hover:bg-slate-50 cursor-pointer'"
+              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+            >Resolvidos</button>
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Problema</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Setor</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Prioridade</th>
+                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              <tr *ngFor="let t of filteredTickets" (click)="selectTicket(t)" class="hover:bg-slate-50 transition-colors cursor-pointer group">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">#{{t.id}}</td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-slate-900 font-medium">{{t.titulo}}</div>
+                  <div class="text-xs text-slate-500 flex items-center mt-0.5">
+                    <i class="ph ph-clock mr-1"></i> {{ formatTime(t.data_abertura) }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                  {{ t.setor_nome || 'Sem Setor' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span [class]="getStatusClass(t.status)" class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border">
+                    {{t.status}}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                  <div class="flex items-center">
+                    <i class="ph text-lg mr-1" [ngClass]="getPriorityIcon(t.prioridade)"></i>
+                    {{t.prioridade}}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button class="text-indigo-600 hover:text-indigo-900 opacity-0 group-hover:opacity-100 transition-opacity flex items-center ml-auto cursor-pointer">
+                    Ver Detalhes & Chat <i class="ph ph-arrow-right ml-1"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tbody *ngIf="isLoading" class="bg-white divide-y divide-slate-200">
+              <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                  <i class="ph ph-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
+                  <p>Carregando chamados...</p>
+                </td>
+              </tr>
+            </tbody>
+            <tbody *ngIf="!isLoading && filteredTickets.length === 0" class="bg-white divide-y divide-slate-200">
+              <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                  <i class="ph ph-check-circle text-2xl mb-2 text-emerald-500"></i>
+                  <p>Você não possui nenhum chamado cadastrado com este filtro.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal de Detalhes do Chamado com Chat -->
+  <div *ngIf="selectedTicket" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all">
+    <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row max-h-[85vh] animate-[scaleIn_0.2s_ease-out]">
+      
+      <!-- Detalhes do Chamado (Esquerda) -->
+      <div class="w-full md:w-1/2 p-6 overflow-y-auto border-r border-slate-100 space-y-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="ph ph-ticket text-xl mr-2 text-indigo-500"></i>
+            <span class="font-bold text-slate-800 text-lg">Chamado #{{ selectedTicket.id }}</span>
+          </div>
+          <button (click)="closeTicketDetails()" class="md:hidden text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+            <i class="ph ph-x text-2xl"></i>
+          </button>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assunto / Título</h4>
+          <p class="text-base font-bold text-slate-800 mt-1">{{ selectedTicket.titulo }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Categoria</h4>
+            <span class="mt-1 inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+              {{ selectedTicket.categoria }}
+            </span>
+          </div>
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</h4>
+            <span [class]="getStatusClass(selectedTicket.status)" class="mt-1 px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border">
+              {{ selectedTicket.status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Prioridade</h4>
+            <div class="flex items-center mt-1 text-sm font-medium text-slate-700">
+              <i class="ph text-lg mr-1.5" [ngClass]="getPriorityIcon(selectedTicket.prioridade)"></i>
+              {{ selectedTicket.prioridade }}
+            </div>
+          </div>
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data de Abertura</h4>
+            <p class="text-sm text-slate-600 mt-1">{{ formatTime(selectedTicket.data_abertura) }}</p>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Técnico Responsável</h4>
+          <p class="text-sm text-slate-700 mt-1 font-medium">
+            {{ selectedTicket.tecnico_responsavel ? 'Atribuído' : 'Aguardando Técnico' }}
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Descrição do Problema</h4>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 mt-1 whitespace-pre-line leading-relaxed">
+            {{ selectedTicket.descricao }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de Chat/Feedback (Direita) -->
+      <div class="w-full md:w-1/2 flex flex-col bg-slate-50 max-h-[85vh]">
+        <!-- Chat Header -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="ph ph-chats text-xl mr-2 text-indigo-400"></i>
+            <span class="font-semibold text-sm">Feedback e Histórico</span>
+          </div>
+          <button (click)="closeTicketDetails()" class="hidden md:block text-slate-400 hover:text-white transition-colors cursor-pointer">
+            <i class="ph ph-x text-2xl"></i>
+          </button>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="flex-1 p-4 overflow-y-auto space-y-4 min-h-[250px]">
+          <div *ngIf="messages.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+            <i class="ph ph-chat-circle-dots text-3xl mb-2"></i>
+            <p class="text-xs">Nenhum feedback enviado ainda. Use o campo abaixo para enviar uma mensagem ao técnico.</p>
+          </div>
+
+          <div *ngFor="let msg of messages" 
+               [class]="msg.autor === currentUser?.id ? 'flex flex-col items-end' : 'flex flex-col items-start'">
+            <div class="flex items-center space-x-1.5 mb-1">
+              <span class="text-xs font-semibold text-slate-500">
+                {{ msg.autor_detalhes?.first_name || msg.autor_detalhes?.username || 'Usuário' }}
+              </span>
+              <span class="text-[10px] text-slate-400">{{ formatTime(msg.data_envio) }}</span>
+            </div>
+            <div [class]="msg.autor === currentUser?.id ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-none px-4 py-2 text-sm shadow-sm max-w-[85%]' : 'bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-none px-4 py-2 text-sm shadow-sm max-w-[85%]'">
+              {{ msg.mensagem }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
+          <input 
+            type="text" 
+            [(ngModel)]="newMessageText" 
+            (keyup.enter)="sendMessage()"
+            [disabled]="isSendingMessage"
+            placeholder="Digite uma mensagem..." 
+            class="flex-1 bg-slate-100 border-transparent rounded-full px-4 py-2 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+          <button 
+            (click)="sendMessage()" 
+            [disabled]="!newMessageText.trim() || isSendingMessage"
+            class="h-9 w-9 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <i class="ph ph-paper-plane-right text-lg" *ngIf="!isSendingMessage"></i>
+            <i class="ph ph-spinner animate-spin text-lg" *ngIf="isSendingMessage"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

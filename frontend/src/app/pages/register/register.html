@@ -1,0 +1,147 @@
+<div class="min-h-screen relative flex items-center justify-center bg-slate-900 overflow-hidden">
+  
+  <!-- Background Elements -->
+  <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+  <div class="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+  <div class="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+
+  <!-- Register Card -->
+  <div class="relative w-full max-w-lg px-8 py-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-10 m-4">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 mb-3 shadow-lg">
+        <i class="ph ph-user-plus text-2xl text-white"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Cadastro de Funcionária</h1>
+      <p class="text-slate-300 mt-1 text-sm">Crie sua conta técnica para acessar o CMEM HelpDesk</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="mb-4 bg-red-500/20 border border-red-500/50 p-3 rounded-lg text-red-200 text-sm flex items-center animate-[pulse_1s_ease-in-out]">
+      <i class="ph ph-warning-circle text-lg mr-2 flex-shrink-0"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="success" class="mb-4 bg-emerald-500/20 border border-emerald-500/50 p-3 rounded-lg text-emerald-200 text-sm flex items-center animate-[pulse_1s_ease-in-out]">
+      <i class="ph ph-check-circle text-lg mr-2 flex-shrink-0"></i>
+      <span>Cadastro realizado com sucesso! Redirecionando...</span>
+    </div>
+
+    <form (submit)="register()" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1" for="nome">Nome</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="ph ph-user text-slate-400 text-base"></i>
+            </div>
+            <input 
+              type="text" 
+              id="nome" 
+              name="nome"
+              [(ngModel)]="nome"
+              class="block w-full pl-9 pr-3 py-2 border border-white/10 rounded-lg leading-5 bg-white/5 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" 
+              placeholder="Ex: Maria"
+              required
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1" for="sobrenome">Sobrenome</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="ph ph-user text-slate-400 text-base"></i>
+            </div>
+            <input 
+              type="text" 
+              id="sobrenome" 
+              name="sobrenome"
+              [(ngModel)]="sobrenome"
+              class="block w-full pl-9 pr-3 py-2 border border-white/10 rounded-lg leading-5 bg-white/5 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" 
+              placeholder="Ex: Silva"
+              required
+            >
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1" for="email">E-mail Institucional</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="ph ph-envelope text-slate-400 text-base"></i>
+          </div>
+          <input 
+            type="email" 
+            id="email" 
+            name="email"
+            [(ngModel)]="email"
+            class="block w-full pl-9 pr-3 py-2 border border-white/10 rounded-lg leading-5 bg-white/5 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" 
+            placeholder="maria@cmem.com.br"
+            required
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1" for="password">Senha</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="ph ph-lock text-slate-400 text-base"></i>
+          </div>
+          <input 
+            type="password" 
+            id="password" 
+            name="password"
+            [(ngModel)]="password"
+            class="block w-full pl-9 pr-3 py-2 border border-white/10 rounded-lg leading-5 bg-white/5 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" 
+            placeholder="Mínimo 6 caracteres"
+            minlength="6"
+            required
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1" for="confirmPassword">Confirmar Senha</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="ph ph-lock-key text-slate-400 text-base"></i>
+          </div>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            class="block w-full pl-9 pr-3 py-2 border border-white/10 rounded-lg leading-5 bg-white/5 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" 
+            placeholder="Digite a senha novamente"
+            minlength="6"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button 
+          type="submit" 
+          [disabled]="isLoading || success"
+          class="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500 transition-all overflow-hidden"
+        >
+          <span *ngIf="!isLoading">Cadastrar</span>
+          <span *ngIf="isLoading" class="flex items-center">
+            <i class="ph ph-spinner animate-spin mr-2"></i> Criando conta...
+          </span>
+          <div class="absolute inset-0 h-full w-full bg-white/20 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+        </button>
+      </div>
+    </form>
+    
+    <div class="mt-6 text-center text-sm text-slate-300 border-t border-white/10 pt-4">
+      Já tem uma conta? 
+      <a [routerLink]="['/login']" class="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+        Fazer login
+      </a>
+    </div>
+  </div>
+</div>

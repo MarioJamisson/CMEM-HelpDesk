@@ -1,0 +1,497 @@
+<div class="min-h-screen bg-slate-50 flex">
+  
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex">
+    <div class="h-16 flex items-center px-6 bg-slate-950 border-b border-slate-800">
+      <i class="ph ph-headset text-2xl mr-2 text-indigo-400"></i>
+      <span class="font-bold text-white tracking-wide">CMEM Admin</span>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-6">
+      <nav class="px-4 space-y-2">
+        <button (click)="setActiveTab('tickets')" 
+           [class]="activeTab === 'tickets' ? 'w-full bg-indigo-600 text-white flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-md cursor-pointer' : 'w-full text-slate-400 hover:bg-slate-800 hover:text-white flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer'"
+        >
+          <i class="ph ph-ticket text-xl mr-3"></i> Chamados
+        </button>
+        <button (click)="setActiveTab('users')" 
+           [class]="activeTab === 'users' ? 'w-full bg-indigo-600 text-white flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-md cursor-pointer' : 'w-full text-slate-400 hover:bg-slate-800 hover:text-white flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer'"
+        >
+          <i class="ph ph-users text-xl mr-3"></i> Funcionárias
+        </button>
+        <button (click)="navigateNovoChamado()" class="w-full text-emerald-400 hover:bg-slate-800 hover:text-emerald-300 flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer mt-4">
+          <i class="ph ph-plus-circle text-xl mr-3"></i> Novo Chamado
+        </button>
+      </nav>
+    </div>
+    
+    <div class="p-4 border-t border-slate-800">
+      <button (click)="logout()" class="w-full text-left text-slate-400 hover:text-white flex items-center px-4 py-2 text-sm font-medium transition-colors cursor-pointer">
+        <i class="ph ph-sign-out text-xl mr-3"></i> Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Topbar -->
+    <header class="h-16 bg-white shadow-sm border-b border-slate-200 flex items-center justify-between px-6 z-20">
+      <div class="flex items-center md:hidden">
+        <i class="ph ph-list text-2xl text-slate-600"></i>
+      </div>
+      
+      <div class="flex-grow px-4">
+        <h2 class="text-xl font-bold text-slate-800 hidden sm:block">Painel do Administrador</h2>
+      </div>
+      
+      <div class="ml-4 flex items-center md:ml-6 space-x-4">
+        <span class="text-slate-600 text-sm font-medium hidden sm:inline" *ngIf="currentUser">
+          Olá, {{ currentUser.first_name || currentUser.username }}
+        </span>
+        
+        <!-- Notificações Dropdown -->
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="text-slate-400 hover:text-slate-500 relative cursor-pointer p-1 rounded-full hover:bg-slate-100 transition-colors">
+            <i class="ph ph-bell text-xl"></i>
+            <span *ngIf="logs.length > 0" class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+          </button>
+          
+          <div *ngIf="showNotifications" class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-[scaleIn_0.15s_ease-out]">
+            <div class="px-4 py-2 border-b border-slate-100 flex justify-between items-center">
+              <span class="font-bold text-slate-800 text-sm">Log de Notificações</span>
+              <span class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">{{ logs.length }} logs</span>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+              <div *ngIf="logs.length === 0" class="px-4 py-6 text-center text-slate-400 text-xs">
+                <i class="ph ph-bell-slash text-2xl mb-1 text-slate-300"></i>
+                <p>Nenhuma atividade recente.</p>
+              </div>
+              <div *ngFor="let log of logs.slice(0, 10)" class="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
+                <p class="text-xs text-slate-700 leading-normal">{{ log.acao }}</p>
+                <span class="text-[10px] text-slate-400 mt-1 block">{{ formatTime(log.data) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md select-none" *ngIf="currentUser">
+          {{ getInitials(currentUser.first_name, currentUser.last_name) }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50 p-6">
+      
+      <!-- ABA DE TICKET LIST -->
+      <div *ngIf="activeTab === 'tickets'">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+            <div class="p-3 rounded-xl bg-blue-50 text-blue-600">
+              <i class="ph ph-ticket text-2xl"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 truncate">Total Geral</p>
+              <p class="mt-1 text-2xl font-semibold text-slate-900">{{ tickets.length }}</p>
+            </div>
+          </div>
+          
+          <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+            <div class="p-3 rounded-xl bg-red-50 text-red-600">
+              <i class="ph ph-warning-circle text-2xl"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 truncate">Abertos</p>
+              <p class="mt-1 text-2xl font-semibold text-slate-900">
+                {{ tickets.filter(t => t.status === 'Aberto').length }}
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+            <div class="p-3 rounded-xl bg-indigo-50 text-indigo-600">
+              <i class="ph ph-desktop text-2xl"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 truncate">Em Análise</p>
+              <p class="mt-1 text-2xl font-semibold text-slate-900">
+                {{ tickets.filter(t => t.status === 'Em análise').length }}
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-slate-100 p-5 flex items-center">
+            <div class="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+              <i class="ph ph-check-circle text-2xl"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 truncate">Resolvidos</p>
+              <p class="mt-1 text-2xl font-semibold text-slate-900">
+                {{ tickets.filter(t => t.status === 'Resolvido').length }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tickets List -->
+        <div class="bg-white shadow-sm rounded-2xl border border-slate-100 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h3 class="text-lg leading-6 font-semibold text-slate-900">
+              Chamados Recentes
+            </h3>
+            
+            <div class="flex space-x-2">
+              <button 
+                (click)="selectedFilter = 'Todos'"
+                [class]="selectedFilter === 'Todos' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 cursor-pointer' : 'bg-white text-slate-600 hover:bg-slate-50 cursor-pointer'"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              >Todos</button>
+              <button 
+                (click)="selectedFilter = 'Aberto'"
+                [class]="selectedFilter === 'Aberto' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 cursor-pointer' : 'bg-white text-slate-600 hover:bg-slate-50 cursor-pointer'"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              >Abertos</button>
+              <button 
+                (click)="selectedFilter = 'Resolvido'"
+                [class]="selectedFilter === 'Resolvido' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 cursor-pointer' : 'bg-white text-slate-600 hover:bg-slate-50 cursor-pointer'"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              >Resolvidos</button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Solicitante</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Problema</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Prioridade</th>
+                  <th scope="col" class="relative px-6 py-3"><span class="sr-only">Ações</span></th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-slate-200">
+                <tr *ngFor="let t of filteredTickets" (click)="selectTicket(t)" class="hover:bg-slate-50 transition-colors cursor-pointer group">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">#{{t.id}}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-800 font-bold text-xs">
+                        {{ getInitials(t.criado_por_detalhes?.first_name, t.criado_por_detalhes?.last_name) }}
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-slate-900">{{ t.criado_por_detalhes?.first_name }} {{ t.criado_por_detalhes?.last_name }}</div>
+                        <div class="text-xs text-slate-500">{{ t.setor_nome || 'Sem Setor' }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-slate-900 font-medium">{{t.titulo}}</div>
+                    <div class="text-xs text-slate-500 flex items-center mt-0.5">
+                      <i class="ph ph-clock mr-1"></i> {{ formatTime(t.data_abertura) }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span [class]="getStatusClass(t.status)" class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border">
+                      {{t.status}}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <div class="flex items-center">
+                      <i class="ph text-lg mr-1" [ngClass]="getPriorityIcon(t.prioridade)"></i>
+                      {{t.prioridade}}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button class="text-indigo-600 hover:text-indigo-900 opacity-0 group-hover:opacity-100 transition-opacity flex items-center ml-auto cursor-pointer">
+                      Gerenciar <i class="ph ph-arrow-right ml-1"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+              <tbody *ngIf="isLoading" class="bg-white divide-y divide-slate-200">
+                <tr>
+                  <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                    <i class="ph ph-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
+                    <p>Carregando chamados...</p>
+                  </td>
+                </tr>
+              </tbody>
+              <tbody *ngIf="!isLoading && filteredTickets.length === 0" class="bg-white divide-y divide-slate-200">
+                <tr>
+                  <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                    <i class="ph ph-check-circle text-2xl mb-2 text-emerald-500"></i>
+                    <p>Nenhum chamado encontrado para este filtro.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA DE LISTA DE FUNCIONÁRIAS -->
+      <div *ngIf="activeTab === 'users'">
+        <div class="bg-white shadow-sm rounded-2xl border border-slate-100 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-lg leading-6 font-semibold text-slate-900">
+              Contas e Funcionárias Cadastradas
+            </h3>
+            <div class="flex items-center gap-3">
+              <button (click)="openAddUserModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                <i class="ph ph-user-plus text-sm"></i> Adicionar Conta
+              </button>
+              <span class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold">
+                {{ users.length }} no total
+              </span>
+            </div>
+          </div>
+          
+          <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="!isLoadingUsers && users.length > 0">
+              <div *ngFor="let user of users" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-all flex items-center justify-between group">
+                <div class="flex items-center overflow-hidden">
+                  <div class="h-12 w-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                    {{ getInitials(user.first_name, user.last_name) }}
+                  </div>
+                  <div class="ml-4 overflow-hidden">
+                    <h4 class="font-semibold text-slate-900 flex items-center gap-1.5 truncate">
+                      {{ user.first_name }} {{ user.last_name }}
+                      <span *ngIf="user.id === currentUser?.id" class="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal shrink-0">Você</span>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-0.5 truncate">{{ user.email }}</p>
+                    <span class="mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" [class]="user.is_staff || user.is_superuser ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-700'">
+                      {{ user.is_staff || user.is_superuser ? 'Técnico/Admin' : 'Usuária Comum' }}
+                    </span>
+                  </div>
+                </div>
+                
+                <button *ngIf="user.id !== currentUser?.id" (click)="deleteUser(user.id)" class="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 cursor-pointer shrink-0" title="Excluir funcionária">
+                  <i class="ph ph-trash text-lg"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div *ngIf="isLoadingUsers" class="py-12 text-center text-slate-500">
+              <i class="ph ph-spinner animate-spin text-3xl text-indigo-600 mb-2"></i>
+              <p>Carregando funcionárias...</p>
+            </div>
+            
+            <div *ngIf="!isLoadingUsers && users.length === 0" class="py-12 text-center text-slate-500">
+              <i class="ph ph-users text-3xl text-slate-300 mb-2"></i>
+              <p>Nenhuma funcionária cadastrada.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal de Detalhes do Chamado com Chat e Ações do Técnico (Split) -->
+  <div *ngIf="selectedTicket" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all">
+    <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row max-h-[85vh] animate-[scaleIn_0.2s_ease-out]">
+      
+      <!-- Detalhes do Chamado (Esquerda) -->
+      <div class="w-full md:w-1/2 p-6 overflow-y-auto border-r border-slate-100 space-y-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="ph ph-ticket text-xl mr-2 text-indigo-500"></i>
+            <span class="font-bold text-slate-800 text-lg">Gerenciar Chamado #{{ selectedTicket.id }}</span>
+          </div>
+          <button (click)="closeTicketDetails()" class="md:hidden text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+            <i class="ph ph-x text-2xl"></i>
+          </button>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solicitante</h4>
+          <p class="text-sm font-semibold text-slate-800 mt-1">
+            {{ selectedTicket.criado_por_detalhes?.first_name }} {{ selectedTicket.criado_por_detalhes?.last_name }} ({{ selectedTicket.criado_por_detalhes?.email }})
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assunto / Título</h4>
+          <p class="text-base font-bold text-slate-800 mt-1">{{ selectedTicket.titulo }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Categoria</h4>
+            <span class="mt-1 inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+              {{ selectedTicket.categoria }}
+            </span>
+          </div>
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status Atual</h4>
+            <span [class]="getStatusClass(selectedTicket.status)" class="mt-1 px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border">
+              {{ selectedTicket.status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Prioridade</h4>
+            <div class="flex items-center mt-1 text-sm font-medium text-slate-700">
+              <i class="ph text-lg mr-1.5" [ngClass]="getPriorityIcon(selectedTicket.prioridade)"></i>
+              {{ selectedTicket.prioridade }}
+            </div>
+          </div>
+          <div>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data de Abertura</h4>
+            <p class="text-sm text-slate-600 mt-1">{{ formatTime(selectedTicket.data_abertura) }}</p>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Descrição do Problema</h4>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 mt-1 whitespace-pre-line leading-relaxed">
+            {{ selectedTicket.descricao }}
+          </div>
+        </div>
+
+        <!-- Ações Rápidas (Aceitar/Recusar) se Status for Aberto -->
+        <div *ngIf="selectedTicket.status === 'Aberto'" class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 space-y-3">
+          <p class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Este chamado está aguardando atendimento</p>
+          <div class="flex gap-2">
+            <button (click)="acceptTicket()" [disabled]="isUpdatingStatus" class="flex-1 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="ph ph-check-bold"></i> Aceitar Chamado
+            </button>
+            <button (click)="rejectTicket()" [disabled]="isUpdatingStatus" class="flex-1 py-2 px-4 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="ph ph-x-bold"></i> Recusar
+            </button>
+          </div>
+        </div>
+
+        <!-- Alteração Geral de Status -->
+        <div class="bg-slate-100 border border-slate-200 rounded-xl p-4">
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Alterar Status Manualmente</label>
+          <div class="flex items-center gap-3">
+            <select 
+              [ngModel]="selectedTicket.status" 
+              (ngModelChange)="updateStatus($event)"
+              [disabled]="isUpdatingStatus"
+              class="flex-1 bg-white border border-slate-300 text-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            >
+              <option value="Aberto">Aberto</option>
+              <option value="Em análise">Em análise</option>
+              <option value="Aguardando resposta da solicitante">Aguardando resposta da solicitante</option>
+              <option value="Aguardando atendimento presencial">Aguardando atendimento presencial</option>
+              <option value="Resolvido">Resolvido</option>
+              <option value="Finalizado">Finalizado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+            <span *ngIf="isUpdatingStatus" class="text-indigo-600 shrink-0">
+              <i class="ph ph-spinner animate-spin text-xl"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de Chat/Feedback (Direita) -->
+      <div class="w-full md:w-1/2 flex flex-col bg-slate-50 max-h-[85vh]">
+        <!-- Chat Header -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="ph ph-chats text-xl mr-2 text-indigo-400"></i>
+            <span class="font-semibold text-sm">Feedback e Histórico com a Solicitante</span>
+          </div>
+          <button (click)="closeTicketDetails()" class="hidden md:block text-slate-400 hover:text-white transition-colors cursor-pointer">
+            <i class="ph ph-x text-2xl"></i>
+          </button>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="flex-1 p-4 overflow-y-auto space-y-4 min-h-[250px]">
+          <div *ngIf="messages.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+            <i class="ph ph-chat-circle-dots text-3xl mb-2"></i>
+            <p class="text-xs">Nenhum feedback enviado ainda. Digite abaixo para dar um feedback ou orientação à solicitante.</p>
+          </div>
+
+          <div *ngFor="let msg of messages" 
+               [class]="msg.autor === currentUser?.id ? 'flex flex-col items-end' : 'flex flex-col items-start'">
+            <div class="flex items-center space-x-1.5 mb-1">
+              <span class="text-xs font-semibold text-slate-500">
+                {{ msg.autor_detalhes?.first_name || msg.autor_detalhes?.username || 'Usuário' }}
+              </span>
+              <span class="text-[10px] text-slate-400">{{ formatTime(msg.data_envio) }}</span>
+            </div>
+            <div [class]="msg.autor === currentUser?.id ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-none px-4 py-2 text-sm shadow-sm max-w-[85%]' : 'bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-none px-4 py-2 text-sm shadow-sm max-w-[85%]'">
+              {{ msg.mensagem }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
+          <input 
+            type="text" 
+            [(ngModel)]="newMessageText" 
+            (keyup.enter)="sendMessage()"
+            [disabled]="isSendingMessage"
+            placeholder="Digite uma mensagem/feedback..." 
+            class="flex-1 bg-slate-100 border-transparent rounded-full px-4 py-2 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+          <button 
+            (click)="sendMessage()" 
+            [disabled]="!newMessageText.trim() || isSendingMessage"
+            class="h-9 w-9 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <i class="ph ph-paper-plane-right text-lg" *ngIf="!isSendingMessage"></i>
+            <i class="ph ph-spinner animate-spin text-lg" *ngIf="isSendingMessage"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal de Adicionar Funcionária -->
+  <div *ngIf="showAddUserModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all animate-[fadeIn_0.2s_ease-out]">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-[scaleIn_0.2s_ease-out]">
+      <div class="px-6 py-4 bg-slate-950 text-white flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="ph ph-user-plus text-xl mr-2 text-indigo-400"></i>
+          <span class="font-semibold">Cadastrar Funcionária</span>
+        </div>
+        <button (click)="closeAddUserModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer">
+          <i class="ph ph-x text-2xl"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div *ngIf="addUserError" class="bg-red-50 border-l-4 border-red-500 p-3 rounded text-xs text-red-700 animate-pulse">
+          {{ addUserError }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome *</label>
+          <input type="text" [(ngModel)]="newUser.first_name" placeholder="Ex: Ana" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Sobrenome</label>
+          <input type="text" [(ngModel)]="newUser.last_name" placeholder="Ex: Souza" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">E-mail *</label>
+          <input type="email" [(ngModel)]="newUser.email" placeholder="Ex: ana@cmem.com.br" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Senha *</label>
+          <input type="password" [(ngModel)]="newUser.password" placeholder="Mínimo 6 caracteres" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button (click)="closeAddUserModal()" [disabled]="isAddingUser" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button (click)="addUser()" [disabled]="isAddingUser" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5 cursor-pointer">
+          <i class="ph ph-spinner animate-spin text-sm" *ngIf="isAddingUser"></i>
+          Cadastrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
